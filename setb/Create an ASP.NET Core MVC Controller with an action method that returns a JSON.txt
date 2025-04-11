@@ -1,68 +1,44 @@
-//program.cs
 
-using System;
-using System.IO;
-using System.Threading.Tasks;
 
-namespace AsyncFileReaderDemo
+//no view needed
+//ProductsController.cs
+
+using Microsoft.AspNetCore.Mvc;
+using ProductApiDemo.Models;
+using System.Collections.Generic;
+
+namespace ProductApiDemo.Controllers
 {
-    class Program
+    public class ProductsController : Controller
     {
-        // Main method marked as async to support await
-        static async Task Main()
+        // Action method to return a JSON list of products
+        [HttpGet]
+        public IActionResult GetProducts()
         {
-            Console.WriteLine("Starting the file reading process...");
-
-            try
+            // Create a sample list of products
+            var products = new List<Product>
             {
-                // Call the asynchronous method to read the file
-                string filePath = "sample.txt";
-                string content = await ReadFileAsync(filePath);
+                new Product { Id = 1, Name = "Laptop", Price = 999.99m },
+                new Product { Id = 2, Name = "Smartphone", Price = 499.99m },
+                new Product { Id = 3, Name = "Headphones", Price = 79.99m }
+            };
 
-                // Print the file contents
-                Console.WriteLine("\nFile Contents:");
-                Console.WriteLine("---------------");
-                Console.WriteLine(content);
-            }
-            catch (FileNotFoundException)
-            {
-                Console.WriteLine("Error: The file 'sample.txt' was not found.");
-            }
-            catch (IOException ex)
-            {
-                Console.WriteLine("IO Error: " + ex.Message);
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine("Unexpected error: " + ex.Message);
-            }
-
-            Console.WriteLine("\nPress any key to exit.");
-            Console.ReadLine();
-        }
-
-        // Asynchronous method to read file contents
-        static async Task<string> ReadFileAsync(string filePath)
-        {
-            Console.WriteLine("Beginning to read the file asynchronously...");
-
-            // Simulate a small delay to demonstrate async behavior
-            await Task.Delay(1000);
-
-            // Read all text from the file asynchronously
-            string content = await File.ReadAllTextAsync(filePath);
-
-            Console.WriteLine("File reading completed.");
-            return content;
+            // Return the list as JSON
+            return Json(products);
         }
     }
 }
 
-//sampletext
-Welcome to asynchronous programming in C#!
-This is line 2 of the sample file.
-Here is some more text for demonstration.
+//Models/Product.cs
 
-//  steps to check
-Right-click sample.txt in Solution Explorer, select Properties.
-Set Copy to Output Directory to Copy always or Copy if newer.
+namespace ProductApiDemo.Models
+{
+    public class Product
+    {
+        public int Id { get; set; }
+        public string Name { get; set; }
+        public decimal Price { get; set; }
+    }
+}
+
+/Products/GetProducts

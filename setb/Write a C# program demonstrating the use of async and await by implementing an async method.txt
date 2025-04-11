@@ -1,0 +1,68 @@
+//program.cs
+
+using System;
+using System.IO;
+using System.Threading.Tasks;
+
+namespace AsyncFileReaderDemo
+{
+    class Program
+    {
+        // Main method marked as async to support await
+        static async Task Main()
+        {
+            Console.WriteLine("Starting the file reading process...");
+
+            try
+            {
+                // Call the asynchronous method to read the file
+                string filePath = "sample.txt";
+                string content = await ReadFileAsync(filePath);
+
+                // Print the file contents
+                Console.WriteLine("\nFile Contents:");
+                Console.WriteLine("---------------");
+                Console.WriteLine(content);
+            }
+            catch (FileNotFoundException)
+            {
+                Console.WriteLine("Error: The file 'sample.txt' was not found.");
+            }
+            catch (IOException ex)
+            {
+                Console.WriteLine("IO Error: " + ex.Message);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Unexpected error: " + ex.Message);
+            }
+
+            Console.WriteLine("\nPress any key to exit.");
+            Console.ReadLine();
+        }
+
+        // Asynchronous method to read file contents
+        static async Task<string> ReadFileAsync(string filePath)
+        {
+            Console.WriteLine("Beginning to read the file asynchronously...");
+
+            // Simulate a small delay to demonstrate async behavior
+            await Task.Delay(1000);
+
+            // Read all text from the file asynchronously
+            string content = await File.ReadAllTextAsync(filePath);
+
+            Console.WriteLine("File reading completed.");
+            return content;
+        }
+    }
+}
+
+//sampletext
+Welcome to asynchronous programming in C#!
+This is line 2 of the sample file.
+Here is some more text for demonstration.
+
+//  steps to check
+Right-click sample.txt in Solution Explorer, select Properties.
+Set Copy to Output Directory to Copy always or Copy if newer.
