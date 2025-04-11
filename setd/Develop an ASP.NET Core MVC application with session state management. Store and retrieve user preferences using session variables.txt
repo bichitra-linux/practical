@@ -1,0 +1,173 @@
+// Install-Package Microsoft.AspNetCore.Mvc.NewtonsoftJson -Version 6.0.35
+
+//Program.cs
+using Microsoft.AspNetCore.Builder;
+using Microsoft.Extensions.DependencyInjection;
+
+var builder = WebApplication.CreateBuilder(args);
+
+// Add services to the container.
+builder.Services.AddControllersWithViews();
+
+// Add session services
+builder.Services.AddSession(options =>
+{
+    options.IdleTimeout = TimeSpan.FromMinutes(30); // Session timeout
+    options.Cookie.HttpOnly = true; // Security: Prevent client-side access
+    options.Cookie.IsEssential = true; // Required for GDPR compliance
+});
+
+// Optional: Use Newtonsoft.Json for complex object serialization
+builder.Services.AddControllers().AddNewtonsoftJson();
+
+builder.Services.AddHttpContextAccessor();
+
+var app = builder.Build();
+
+// Configure the HTTP request pipeline.
+if (!app.Environment.IsDevelopment())
+{
+    app.UseExceptionHandler("/Home/Error");
+    app.UseHsts();
+}
+
+app.UseHttpsRedirection();
+app.UseStaticFiles();
+
+app.UseRouting();
+
+// Add session middleware
+app.UseSession();
+
+app.UseAuthorization();
+
+app.MapControllerRoute(
+    name: "default",
+    pattern: "{controller=Preferences}/{action=Index}/{id?}");
+
+app.Run();
+
+//Models/UserPreferences.cs
+namespace SessionDemo.Models
+{
+    public class UserPreferences
+    {
+        public string Theme { get; set; } = "Light"; // Default value
+        public int FontSize { get; set; } = 16;     // Default value
+    }
+}
+
+//Controllers/PreferencesController.cs
+using Microsoft.AspNetCore.Mvc;
+using SessionDemo.Models;
+using System.Text.Json; // For session serialization
+
+namespace SessionDemo.Controllers
+{
+    public class PreferencesController : Controller
+    {
+        private const string PreferencesKey = "UserPreferences";
+
+        // GET: /Preferences
+        public IActionResult Index()
+        {
+            // Retrieve preferences from session, or use defaults
+            var preferences = GetPreferencesFromSession();
+            return View(preferences);
+        }
+
+        // POST: /Preferences
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult Index(UserPreferences preferences)
+        {
+            if (ModelState.IsValid)
+            {
+                // Store preferences in session
+                HttpContext.Session.SetString(PreferencesKey, JsonSerializer.Serialize(preferences));
+                ViewBag.Message = "Preferences saved successfully!";
+            }
+            return View(preferences);
+        }
+
+        // Helper method to get preferences from session
+        private UserPreferences GetPreferencesFromSession()
+        {
+            var sessionData = HttpContext.Session.GetString(PreferencesKey);
+            if (string.IsNullOrEmpty(sessionData))
+            {
+                return new UserPreferences(); // Return defaults if no session data
+            }
+            return JsonSerializer.Deserialize<UserPreferences>(sessionData) ?? new UserPreferences();
+        }
+    }
+}
+
+//Views/Preferences/Index.cshtml
+@model SessionDemo.Models.UserPreferences
+
+@{
+    ViewData["Title"] = "User Preferences";
+}
+
+<h2>User Preferences</h2>
+
+@if (!string.IsNullOrEmpty(ViewBag.Message))
+{
+    <div class="alert alert-success">@ViewBag.Message</div>
+}
+
+<h3>Current Preferences</h3>
+<p>Theme: @Model.Theme</p>
+<p>Font Size: @Model.FontSize px</p>
+
+<h3>Set Preferences</h3>
+<form asp-action="Index" method="post">
+    <div class="form-group">
+        <label asp-for="Theme" class="control-label">Theme</label>
+        <select asp-for="Theme" class="form-control">
+            <option value="Light">Light</option>
+            <option value="Dark">Dark</option>
+        </select>
+    </div>
+    <div class="form-group">
+        <label asp-for="FontSize" class="control-label">Font Size (px)</label>
+        <input asp-for="FontSize" class="form-control" type="number" min="10" max="50" />
+        <span asp-validation-for="FontSize" class="text-danger"></span>
+    </div>
+    <div class="form-group">
+        <input type="submit" value="Save Preferences" class="btn btn-primary" />
+    </div>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
+
+//_LAyout.cshtml
+@inject Microsoft.AspNetCore.Http.IHttpContextAccessor HttpContextAccessor
+@{
+    var session = HttpContextAccessor.HttpContext.Session;
+    var preferencesJson = session.GetString("UserPreferences");
+    var preferences = string.IsNullOrEmpty(preferencesJson) 
+        ? new SessionDemo.Models.UserPreferences() 
+        : System.Text.Json.JsonSerializer.Deserialize<SessionDemo.Models.UserPreferences>(preferencesJson);
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - SessionDemo</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <style>
+        body {
+            background-color: @(preferences.Theme == "Dark" ? "#333" : "#fff");
+            color: @(preferences.Theme == "Dark" ? "#fff" : "#000");
+            font-size: @(preferences.FontSize)px;
+        }
+    </style>
+</head>
+<body>
