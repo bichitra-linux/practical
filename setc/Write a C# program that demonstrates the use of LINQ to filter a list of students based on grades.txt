@@ -1,0 +1,77 @@
+//program.cs
+using System;
+using System.Collections.Generic;
+using System.Linq;
+
+namespace LinqStudentFilterDemo
+{
+    // Define the Student class
+    public class Student
+    {
+        public int Id { get; set; }
+        public string Name { get; set; }
+        public double Grade { get; set; }
+    }
+
+    class Program
+    {
+        static void Main()
+        {
+            // Create a list of students with sample data
+            List<Student> students = new List<Student>
+            {
+                new Student { Id = 1, Name = "Alice", Grade = 85.5 },
+                new Student { Id = 2, Name = "Bob", Grade = 72.0 },
+                new Student { Id = 3, Name = "Charlie", Grade = 90.0 },
+                new Student { Id = 4, Name = "Diana", Grade = 65.5 },
+                new Student { Id = 5, Name = "Eve", Grade = 88.0 }
+            };
+
+            // Display all students
+            Console.WriteLine("All Students:");
+            DisplayStudents(students);
+
+            // Define the grade threshold for filtering
+            double gradeThreshold = 80.0;
+
+            // LINQ Query Syntax: Filter students with grades >= 80
+            var highPerformersQuery = from student in students
+                                      where student.Grade >= gradeThreshold
+                                      select student;
+
+            // Display filtered students (Query Syntax)
+            Console.WriteLine($"\nStudents with Grades >= {gradeThreshold} (Query Syntax):");
+            DisplayStudents(highPerformersQuery.ToList());
+
+            // LINQ Method Syntax: Filter students with grades >= 80
+            var highPerformersMethod = students.Where(s => s.Grade >= gradeThreshold);
+
+            // Display filtered students (Method Syntax)
+            Console.WriteLine($"\nStudents with Grades >= {gradeThreshold} (Method Syntax):");
+            DisplayStudents(highPerformersMethod.ToList());
+
+            // Keep console open
+            Console.WriteLine("\nPress any key to exit.");
+            Console.ReadLine();
+        }
+
+        // Helper method to display a list of students
+        static void DisplayStudents(List<Student> students)
+        {
+            if (students.Any())
+            {
+                Console.WriteLine("{0,-5} {1,-10} {2,-10}", "ID", "Name", "Grade");
+                Console.WriteLine(new string('-', 25));
+                foreach (var student in students)
+                {
+                    Console.WriteLine("{0,-5} {1,-10} {2,-10:F1}",
+                        student.Id, student.Name, student.Grade);
+                }
+            }
+            else
+            {
+                Console.WriteLine("No students found.");
+            }
+        }
+    }
+}
