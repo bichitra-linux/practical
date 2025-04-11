@@ -1,0 +1,123 @@
+//not all correct
+
+//select individual accounts
+//appsettings.Json
+"DefaultConnection": "DataSource=:memory:"
+
+//program.cs
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
+using RoleBasedAuthDemo.Data;
+
+var builder = WebApplication.CreateBuilder(args);
+
+// Add services to the container.
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? ":memory:";
+builder.Services.AddDbContext<ApplicationDbContext>(options =>
+    options.UseInMemoryDatabase(connectionString));
+builder.Services.AddDatabaseDeveloperPageExceptionFilter();
+
+// Add Identity with roles
+builder.Services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.RequireConfirmedAccount = false)
+    .AddRoles<IdentityRole>()
+    .AddEntityFrameworkStores<ApplicationDbContext>();
+
+builder.Services.AddControllersWithViews();
+
+var app = builder.Build();
+
+// Configure the HTTP request pipeline.
+if (app.Environment.IsDevelopment())
+{
+    app.UseMigrationsEndPoint();
+}
+else
+{
+    app.UseExceptionHandler("/Home/Error");
+    app.UseHsts();
+}
+
+app.UseHttpsRedirection();
+app.UseStaticFiles();
+
+app.UseRouting();
+
+app.UseAuthentication();
+app.UseAuthorization();
+
+app.MapControllerRoute(
+    name: "default",
+    pattern: "{controller=Home}/{action=Index}/{id?}");
+app.MapRazorPages();
+
+// Seed roles and admin user
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+    var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
+    var userManager = services.GetRequiredService<UserManager<IdentityUser>>();
+
+    // Create Admin role
+    if (!await roleManager.RoleExistsAsync("Admin"))
+    {
+        await roleManager.CreateAsync(new IdentityRole("Admin"));
+    }
+
+    // Create an admin user
+    var adminUser = await userManager.FindByEmailAsync("admin@example.com");
+    if (adminUser == null)
+    {
+        adminUser = new IdentityUser
+        {
+            UserName = "admin@example.com",
+            Email = "admin@example.com"
+        };
+        await userManager.CreateAsync(adminUser, "Admin@123");
+        await userManager.AddToRoleAsync(adminUser, "Admin");
+    }
+
+    if (!await roleManager.RoleExistsAsync("User"))
+    {
+        await roleManager.CreateAsync(new IdentityRole("User"));
+    }
+
+    var regularUser = await userManager.FindByEmailAsync("user@example.com");
+    if (regularUser == null)
+    {
+        regularUser = new IdentityUser
+        {
+            UserName = "user@example.com",
+            Email = "user@example.com"
+        };
+        await userManager.CreateAsync(regularUser, "User@123");
+        await userManager.AddToRoleAsync(regularUser, "User");
+    }
+}
+
+app.Run();
+
+//Controllers/AdminController.cs
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+
+namespace RoleBasedAuthDemo.Controllers
+{
+    public class AdminController : Controller
+    {
+        // Action method restricted to Admin role
+        [Authorize(Roles = "Admin")]
+        public IActionResult Dashboard()
+        {
+            return View();
+        }
+    }
+}
+
+//Views/Admin/Dashboard.cshtml
+@{
+    ViewData["Title"] = "Admin Dashboard";
+}
+
+<h2>Admin Dashboard</h2>
+<p>Welcome, @User.Identity.Name! This page is only accessible to users in the Admin role.</p>
