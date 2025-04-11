@@ -1,0 +1,88 @@
+//program.cs
+using System;
+
+namespace DelegateEventDemo
+{
+    // Define the delegate for the event handler
+    public delegate void UserLoggedInEventHandler(string username, DateTime loginTime);
+
+    // Class to manage user authentication and raise events
+    public class UserAuthentication
+    {
+        // Declare the event using the delegate
+        public event UserLoggedInEventHandler UserLoggedIn;
+
+        // Method to simulate user login
+        public void Login(string username)
+        {
+            Console.WriteLine($"Attempting login for user: {username}");
+
+            // Simulate login validation (e.g., checking credentials)
+            bool isValidUser = !string.IsNullOrWhiteSpace(username);
+
+            if (isValidUser)
+            {
+                // Capture login time
+                DateTime loginTime = DateTime.Now;
+
+                // Raise the event by invoking the delegate
+                OnUserLoggedIn(username, loginTime);
+            }
+            else
+            {
+                Console.WriteLine("Login failed: Invalid username.");
+            }
+        }
+
+        // Protected virtual method to raise the event
+        protected virtual void OnUserLoggedIn(string username, DateTime loginTime)
+        {
+            // Check if there are any subscribers before invoking
+            UserLoggedIn?.Invoke(username, loginTime);
+        }
+    }
+
+    class Program
+    {
+        static void Main()
+        {
+            // Create an instance of UserAuthentication
+            UserAuthentication authSystem = new UserAuthentication();
+
+            // Subscribe to the UserLoggedIn event with multiple handlers
+            authSystem.UserLoggedIn += LogLoginActivity;
+            authSystem.UserLoggedIn += SendNotification;
+
+            // Simulate user logins
+            Console.WriteLine("Simulating user login...");
+            authSystem.Login("Alice");
+
+            // Wait briefly to show timestamp difference
+            System.Threading.Thread.Sleep(1000);
+
+            // Simulate another login
+            Console.WriteLine("\nSimulating another user login...");
+            authSystem.Login("Bob");
+
+            // Simulate a failed login
+            Console.WriteLine("\nSimulating invalid login...");
+            authSystem.Login(""); // Empty username
+
+            // Keep console open
+            Console.WriteLine("\nPress any key to exit.");
+            Console.ReadLine();
+        }
+
+        // Event handler 1: Log login activity
+        static void LogLoginActivity(string username, DateTime loginTime)
+        {
+            Console.WriteLine($"[LOG] User {username} logged in at {loginTime:yyyy-MM-dd HH:mm:ss}");
+        }
+
+        // Event handler 2: Simulate sending a notification
+        static void SendNotification(string username, DateTime loginTime)
+        {
+            Console.WriteLine($"[NOTIFICATION] Welcome, {username}! You logged in at {loginTime:yyyy-MM-dd HH:mm:ss}");
+        }
+    }
+}
