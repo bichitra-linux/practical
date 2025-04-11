@@ -1,0 +1,62 @@
+//Deploy to IIS
+Step 3: Install IIS and Hosting Bundle
+Install IIS on Windows:
+Open Control Panel > Programs > Turn Windows features on or off.
+Check Internet Information Services > World Wide Web Services > Application Development Features > Ensure ASP.NET 4.8 and IIS Management Console are enabled.
+Click OK to install.
+Install .NET Core Hosting Bundle:
+Download from dotnet.microsoft.com (e.g., .NET 6.0 Hosting Bundle).
+Run the installer (requires admin rights).
+This includes the ASP.NET Core Module (ANCM) for IIS.
+Restart IIS:
+Open a Command Prompt as Administrator.
+Run: iisreset.
+Step 4: Publish the Application for IIS
+Publish from Visual Studio:
+In Solution Explorer, right-click HostingDemo > Publish.
+Select Folder as the target.
+Click Next.
+Folder Location: Choose a path (e.g., C:\inetpub\HostingDemo).
+Click Finish.
+Configure Publish Profile:
+In the Publish window, click Edit.
+Configuration: Select Release.
+Target Framework: Ensure it matches your project (e.g., net6.0).
+Deployment Mode: Choose Framework-Dependent (uses installed .NET runtime) or Self-Contained (includes runtime).
+Click Save.
+Publish:
+Click Publish.
+Visual Studio builds and copies files to C:\inetpub\HostingDemo.
+Step 5: Configure IIS
+Open IIS Manager:
+Press Win + R, type inetmgr, and press Enter.
+Create an Application Pool:
+In the left pane, expand the server node, right-click Application Pools > Add Application Pool.
+Name: HostingDemoPool.
+.NET CLR Version: Select No Managed Code (ASP.NET Core runs as an out-of-process app).
+Managed Pipeline Mode: Integrated.
+Click OK.
+Create a Website:
+Right-click Sites > Add Website.
+Site Name: HostingDemo.
+Application Pool: Select HostingDemoPool.
+Physical Path: Browse to C:\inetpub\HostingDemo.
+Port: Use a free port (e.g., 8080).
+Host Name: Leave blank (or set for domain access).
+Click OK.
+Set Permissions:
+Right-click C:\inetpub\HostingDemo in File Explorer > Properties > Security.
+Grant Modify permissions to IIS_IUSRS and IUSR.
+Set Environment Variable (Optional):
+To set the environment to Production:
+Open IIS Manager > Select the site > Configuration Editor.
+Navigate to system.webServer/aspNetCore.
+Set environmentVariables > Add ASPNETCORE_ENVIRONMENT = Production.
+Apply changes.
+Step 6: Test IIS Deployment
+Browse the Site:
+Open a browser to http://localhost:8080 (or your port).
+Expect: “Welcome” with “Production Environment” (if set) or “Default Environment”.
+Verify Logs:
+Check C:\inetpub\HostingDemo\logs\stdout (if logging enabled) for errors.
+

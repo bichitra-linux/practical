@@ -1,0 +1,86 @@
+// add in _Layout.cshtml
+<script src="~/lib/jquery/dist/jquery.min.js"></script>
+<script src="~/lib/jquery-validation/dist/jquery.validate.min.js"></script>
+<script src="~/lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.min.js"></script>
+
+//Models/Contact.cs
+using System.ComponentModel.DataAnnotations;
+
+namespace ClientValidationDemo.Models
+{
+    public class Contact
+    {
+        [Required(ErrorMessage = "Email is required")]
+        [EmailAddress(ErrorMessage = "Invalid email format")]
+        public string Email { get; set; }
+
+        [Required(ErrorMessage = "Phone number is required")]
+        [RegularExpression(@"^\(?([0-9]{3})\)?[-. ]?([0-9]{3})[-. ]?([0-9]{4})$",
+            ErrorMessage = "Phone number must be in the format (123) 456-7890 or 123-456-7890")]
+        public string PhoneNumber { get; set; }
+    }
+}
+
+//ContactController.cs
+using Microsoft.AspNetCore.Mvc;
+using ClientValidationDemo.Models;
+
+namespace ClientValidationDemo.Controllers
+{
+    public class ContactController : Controller
+    {
+        // GET: /Contact
+        public IActionResult Index()
+        {
+            return View(new Contact());
+        }
+
+        // POST: /Contact
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult Index(Contact contact)
+        {
+            if (ModelState.IsValid)
+            {
+                // Simulate saving data (e.g., to a database)
+                ViewBag.Message = $"Contact saved: {contact.Email}, {contact.PhoneNumber}";
+                return View(new Contact()); // Clear form
+            }
+            return View(contact);
+        }
+    }
+}
+
+//Views/Contact/index.cshtml
+@model ClientValidationDemo.Models.Contact
+
+@{
+    ViewData["Title"] = "Contact Form";
+}
+
+<h2>Contact Form</h2>
+
+@if (!string.IsNullOrEmpty(ViewBag.Message))
+{
+    <div class="alert alert-success">@ViewBag.Message</div>
+}
+
+<form asp-action="Index" method="post">
+    <div class="form-group">
+        <label asp-for="Email" class="control-label"></label>
+        <input asp-for="Email" class="form-control" />
+        <span asp-validation-for="Email" class="text-danger"></span>
+    </div>
+    <div class="form-group">
+        <label asp-for="PhoneNumber" class="control-label"></label>
+        <input asp-for="PhoneNumber" class="form-control" />
+        <span asp-validation-for="PhoneNumber" class="text-danger"></span>
+    </div>
+    <div class="form-group">
+        <input type="submit" value="Submit" class="btn btn-primary" />
+    </div>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

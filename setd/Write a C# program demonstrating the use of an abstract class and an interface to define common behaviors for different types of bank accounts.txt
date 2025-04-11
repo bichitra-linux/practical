@@ -1,0 +1,150 @@
+//ptogram.cs
+using System;
+
+namespace BankAccountDemo
+{
+    // Interface defining common bank account operations
+    public interface IBankAccount
+    {
+        void Deposit(decimal amount);
+        bool Withdraw(decimal amount);
+        decimal GetBalance();
+    }
+
+    // Abstract class providing shared functionality and a template
+    public abstract class BankAccount : IBankAccount
+    {
+        protected decimal Balance { get; set; } // Protected to allow derived classes access
+        public string AccountNumber { get; }
+
+        // Constructor to initialize account number and balance
+        protected BankAccount(string accountNumber, decimal initialBalance)
+        {
+            if (initialBalance < 0)
+                throw new ArgumentException("Initial balance cannot be negative.");
+            AccountNumber = accountNumber;
+            Balance = initialBalance;
+        }
+
+        // Implement IBankAccount methods
+        public void Deposit(decimal amount)
+        {
+            if (amount <= 0)
+                throw new ArgumentException("Deposit amount must be positive.");
+            Balance += amount;
+            Console.WriteLine($"Deposited {amount:C} to {AccountNumber}. New balance: {Balance:C}");
+        }
+
+        public bool Withdraw(decimal amount)
+        {
+            if (amount <= 0)
+                throw new ArgumentException("Withdrawal amount must be positive.");
+            if (CanWithdraw(amount))
+            {
+                Balance -= amount;
+                Console.WriteLine($"Withdrew {amount:C} from {AccountNumber}. New balance: {Balance:C}");
+                return true;
+            }
+            Console.WriteLine($"Withdrawal of {amount:C} from {AccountNumber} failed. Insufficient funds or restrictions.");
+            return false;
+        }
+
+        public decimal GetBalance()
+        {
+            return Balance;
+        }
+
+        // Abstract method for derived classes to implement
+        public abstract decimal CalculateInterest();
+
+        // Virtual method to check withdrawal feasibility, overridden by derived classes if needed
+        protected virtual bool CanWithdraw(decimal amount)
+        {
+            return Balance >= amount;
+        }
+    }
+
+    // Concrete class for Savings Account
+    public class SavingsAccount : BankAccount
+    {
+        private readonly decimal _interestRate;
+
+        public SavingsAccount(string accountNumber, decimal initialBalance, decimal interestRate)
+            : base(accountNumber, initialBalance)
+        {
+            if (interestRate < 0)
+                throw new ArgumentException("Interest rate cannot be negative.");
+            _interestRate = interestRate;
+        }
+
+        // Implement interest calculation specific to savings accounts
+        public override decimal CalculateInterest()
+        {
+            decimal interest = Balance * _interestRate;
+            Balance += interest;
+            Console.WriteLine($"Applied interest to {AccountNumber}. Interest: {interest:C}, New balance: {Balance:C}");
+            return interest;
+        }
+    }
+
+    // Concrete class for Checking Account
+    public class CheckingAccount : BankAccount
+    {
+        private readonly decimal _minimumBalance;
+
+        public CheckingAccount(string accountNumber, decimal initialBalance, decimal minimumBalance)
+            : base(accountNumber, initialBalance)
+        {
+            if (minimumBalance < 0)
+                throw new ArgumentException("Minimum balance cannot be negative.");
+            _minimumBalance = minimumBalance;
+        }
+
+        // Override CanWithdraw to enforce minimum balance
+        protected override bool CanWithdraw(decimal amount)
+        {
+            return (Balance - amount) >= _minimumBalance;
+        }
+
+        // No interest for checking accounts
+        public override decimal CalculateInterest()
+        {
+            Console.WriteLine($"No interest applied to {AccountNumber} (Checking Account).");
+            return 0;
+        }
+    }
+
+    class Program
+    {
+        static void Main()
+        {
+            try
+            {
+                // Create a savings account
+                Console.WriteLine("=== Savings Account Operations ===");
+                SavingsAccount savings = new SavingsAccount("SAV123", 1000m, 0.05m); // 5% interest
+                savings.Deposit(500m);
+                savings.Withdraw(200m);
+                savings.CalculateInterest();
+                Console.WriteLine($"Final balance: {savings.GetBalance():C}");
+
+                // Create a checking account
+                Console.WriteLine("\n=== Checking Account Operations ===");
+                CheckingAccount checking = new CheckingAccount("CHK456", 1000m, 100m); // $100 minimum
+                checking.Deposit(300m);
+                checking.Withdraw(1100m); // Should fail due to minimum balance
+                checking.Withdraw(800m);  // Should succeed
+                checking.CalculateInterest();
+                Console.WriteLine($"Final balance: {checking.GetBalance():C}");
+            }
+            catch (ArgumentException ex)
+            {
+                Console.WriteLine($"Error: {ex.Message}");
+            }
+
+            // Keep console open
+            Console.WriteLine("\nPress any key to exit.");
+            Console.ReadLine();
+        }
+    }
+}
