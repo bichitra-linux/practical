@@ -1,0 +1,61 @@
+//select web api
+// Models/Student.cs
+
+namespace StudentApiDemo.Models
+{
+    public class Student
+    {
+        public int Id { get; set; }
+        public string Name { get; set; }
+        public int Age { get; set; }
+    }
+}
+
+//Services/IStudentService.cs
+
+using StudentApiDemo.Models;
+using System.Collections.Generic;
+
+namespace StudentApiDemo.Services
+{
+    public interface IStudentService
+    {
+        List<Student> GetStudents();
+    }
+}
+
+//Services/StudentService.cs
+
+//Program.cs add : builder.Services.AddScoped<IStudentService, StudentService>();
+
+//Controllers/StudentsController.cs
+
+
+using Microsoft.AspNetCore.Mvc;
+using StudentApiDemo.Models;
+using StudentApiDemo.Services;
+using System.Collections.Generic;
+
+namespace StudentApiDemo.Controllers
+{
+    [Route("api/[controller]")]
+    [ApiController]
+    public class StudentsController : ControllerBase
+    {
+        private readonly IStudentService _studentService;
+
+        // Constructor injection of the student service
+        public StudentsController(IStudentService studentService)
+        {
+            _studentService = studentService;
+        }
+
+        // GET: api/Students
+        [HttpGet]
+        public ActionResult<List<Student>> GetStudents()
+        {
+            var students = _studentService.GetStudents();
+            return Ok(students);
+        }
+    }
+}
