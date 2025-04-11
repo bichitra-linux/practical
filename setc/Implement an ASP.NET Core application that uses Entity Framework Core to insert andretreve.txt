@@ -1,0 +1,193 @@
+//Install-Package Microsoft.EntityFrameworkCore -Version 6.0.35
+//Install-Package Microsoft.EntityFrameworkCore.Sqlite -Version 6.0.35
+//Install-Package Microsoft.EntityFrameworkCore.Design -Version 6.0.35
+
+//Model/Product.cs
+using System.ComponentModel.DataAnnotations;
+
+namespace ProductManagementDemo.Models
+{
+    public class Product
+    {
+        public int Id { get; set; }
+
+        [Required(ErrorMessage = "Name is required")]
+        [StringLength(100, ErrorMessage = "Name cannot exceed 100 characters")]
+        public string Name { get; set; }
+
+        [Required(ErrorMessage = "Price is required")]
+        [Range(0.01, double.MaxValue, ErrorMessage = "Price must be greater than 0")]
+        public decimal Price { get; set; }
+    }
+}
+
+//Data/ApplicationDbContext.cs
+using Microsoft.EntityFrameworkCore;
+using ProductManagementDemo.Models;
+
+namespace ProductManagementDemo.Data
+{
+    public class ApplicationDbContext : DbContext
+    {
+        public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
+            : base(options)
+        {
+        }
+
+        public DbSet<Product> Products { get; set; }
+    }
+}
+
+//appsettings.json
+"ConnectionStrings": {
+    "DefaultConnection": "Data Source=products.db"
+  },
+
+//program.cs
+using Microsoft.EntityFrameworkCore;
+using ProductManagementDemo.Data;
+
+var builder = WebApplication.CreateBuilder(args);
+
+// Add services to the container.
+builder.Services.AddControllersWithViews();
+
+// Configure Entity Framework Core with SQLite
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+builder.Services.AddDbContext<ApplicationDbContext>(options =>
+    options.UseSqlite(connectionString));
+
+var app = builder.Build();
+
+// Configure the HTTP request pipeline.
+if (!app.Environment.IsDevelopment())
+{
+    app.UseExceptionHandler("/Home/Error");
+    app.UseHsts();
+}
+
+app.UseHttpsRedirection();
+app.UseStaticFiles();
+
+app.UseRouting();
+
+app.UseAuthorization();
+
+app.MapControllerRoute(
+    name: "default",
+    pattern: "{controller=Products}/{action=Index}/{id?}");
+
+app.Run();
+
+//Add-Migration InitialCreate
+//Update-Database
+
+//ProductsController.cs
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using ProductManagementDemo.Data;
+using ProductManagementDemo.Models;
+
+namespace ProductManagementDemo.Controllers
+{
+    public class ProductsController : Controller
+    {
+        private readonly ApplicationDbContext _context;
+
+        public ProductsController(ApplicationDbContext context)
+        {
+            _context = context;
+        }
+
+        // GET: /Products
+        public async Task<IActionResult> Index()
+        {
+            var products = await _context.Products.ToListAsync();
+            return View(products);
+        }
+
+        // GET: /Products/Create
+        public IActionResult Create()
+        {
+            return View();
+        }
+
+        // POST: /Products/Create
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Create(Product product)
+        {
+            if (ModelState.IsValid)
+            {
+                _context.Add(product);
+                await _context.SaveChangesAsync();
+                return RedirectToAction(nameof(Index));
+            }
+            return View(product);
+        }
+    }
+}
+
+//Products/index.cshtml
+@model IEnumerable<ProductManagementDemo.Models.Product>
+
+@{
+    ViewData["Title"] = "Products";
+}
+
+<h2>Products</h2>
+
+<p>
+    <a asp-action="Create">Add New Product</a>
+</p>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Name</th>
+            <th>Price</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var product in Model)
+        {
+            <tr>
+                <td>@product.Id</td>
+                <td>@product.Name</td>
+                <td>@product.Price:C</td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+//Products/Create.cshtml
+@model ProductManagementDemo.Models.Product
+
+@{
+    ViewData["Title"] = "Add Product";
+}
+
+<h2>Add Product</h2>
+
+<form asp-action="Create" method="post">
+    <div class="form-group">
+        <label asp-for="Name" class="control-label"></label>
+        <input asp-for="Name" class="form-control" />
+        <span asp-validation-for="Name" class="text-danger"></span>
+    </div>
+    <div class="form-group">
+        <label asp-for="Price" class="control-label"></label>
+        <input asp-for="Price" class="form-control" />
+        <span asp-validation-for="Price" class="text-danger"></span>
+    </div>
+    <div class="form-group">
+        <input type="submit" value="Create" class="btn btn-primary" />
+    </div>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
+
+//add in _Layout.cshtml <script src="~/lib/jquery/dist/jquery.min.js"></script><script src="~/lib/jquery-validation/dist/jquery.validate.min.js"></script><script src="~/lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.min.js"></script>
