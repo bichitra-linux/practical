@@ -1,0 +1,43 @@
+using System;
+
+namespace MethodOverridingDemo
+{
+    class Program
+    {
+        static void Main(string[] args)
+        {
+            // Create a Shape object and call Draw()
+            Console.WriteLine("Creating a Shape object and calling Draw():");
+            Shape shape1 = new Shape();
+            shape1.Draw();
+
+            // Create a Circle object referenced as Shape and call Draw()
+            Console.WriteLine("\nCreating a Circle object and calling Draw() through Shape reference:");
+            Shape shape2 = new Circle();
+            shape2.Draw();
+
+            // Create a Circle object directly and call Draw()
+            Console.WriteLine("\nCreating a Circle object and calling Draw() directly:");
+            Circle myCircle = new Circle();
+            myCircle.Draw();
+        }
+    }
+
+    // Base class Shape with a virtual method
+    public class Shape
+    {
+        public virtual void Draw()
+        {
+            Console.WriteLine("Drawing a shape");
+        }
+    }
+
+    // Derived class Circle that overrides the Draw method
+    public class Circle : Shape
+    {
+        public override void Draw()
+        {
+            Console.WriteLine("Drawing a circle");
+        }
+    }
+}

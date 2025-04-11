@@ -1,0 +1,153 @@
+using System;
+
+namespace EmployeeDemo
+{
+    // Employee class definition
+    public class Employee
+    {
+        // Private backing fields
+        private string _name;
+        private int _id;
+        private decimal _salary;
+
+        // Constructor
+        public Employee(string name, int id, decimal salary)
+        {
+            Name = name;
+            ID = id;
+            Salary = salary;
+        }
+
+        // Properties with validation
+        public string Name
+        {
+            get { return _name; }
+            set
+            {
+                if (string.IsNullOrWhiteSpace(value))
+                    throw new ArgumentException("Name cannot be empty or null");
+                _name = value;
+            }
+        }
+
+        public int ID
+        {
+            get { return _id; }
+            set
+            {
+                if (value <= 0)
+                    throw new ArgumentException("ID must be positive");
+                _id = value;
+            }
+        }
+
+        public decimal Salary
+        {
+            get { return _salary; }
+            set
+            {
+                if (value < 0)
+                    throw new ArgumentException("Salary cannot be negative");
+                _salary = value;
+            }
+        }
+
+        // Method to display employee information
+        public void DisplayInfo()
+        {
+            Console.WriteLine($"Employee Information:");
+            Console.WriteLine($"Name: {Name}");
+            Console.WriteLine($"ID: {ID}");
+            Console.WriteLine($"Salary: {Salary:C}");
+        }
+    }
+
+    class Program
+    {
+        static void Main(string[] args)
+        {
+            try
+            {
+                // DEFAULT MODE: Predefined employees
+                // To use manual entry, comment out this block and uncomment the manual entry block below
+                //Console.WriteLine("Displaying predefined employees:");
+                //Employee emp1 = new Employee("John Doe", 1001, 50000.00m);
+                //Employee emp2 = new Employee("Jane Smith", 1002, 60000.00m);
+
+                //Console.WriteLine("First Employee:");
+                //emp1.DisplayInfo();
+                //Console.WriteLine();
+
+                //Console.WriteLine("Second Employee:");
+                //emp2.DisplayInfo();
+                //Console.WriteLine();
+
+                // Demonstrate property usage
+                //Console.WriteLine("\nModifying first employee's salary:");
+                //emp1.Salary = 55000.00m;
+                //emp1.DisplayInfo();
+
+                // MANUAL ENTRY MODE: Comment out the above block and uncomment this block to enable
+                
+                Console.WriteLine("Enter details for Employee 1:");
+                Employee emp1 = CreateEmployeeFromInput();
+                Console.WriteLine("\nEnter details for Employee 2:");
+                Employee emp2 = CreateEmployeeFromInput();
+
+                Console.WriteLine("\nFirst Employee:");
+                emp1.DisplayInfo();
+                Console.WriteLine();
+
+                Console.WriteLine("Second Employee:");
+                emp2.DisplayInfo();
+                Console.WriteLine();
+
+                // Demonstrate property usage
+                Console.WriteLine("\nEnter new salary for first employee:");
+                if (decimal.TryParse(Console.ReadLine(), out decimal newSalary))
+                {
+                    emp1.Salary = newSalary;
+                    Console.WriteLine("\nUpdated First Employee:");
+                    emp1.DisplayInfo();
+                }
+                else
+                {
+                    Console.WriteLine("Invalid salary format");
+                }
+                
+            }
+            catch (ArgumentException ex)
+            {
+                Console.WriteLine($"Error: {ex.Message}");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Unexpected error: {ex.Message}");
+            }
+
+            Console.WriteLine("\nPress any key to exit...");
+            Console.ReadKey();
+        }
+
+        // Method to create employee from console input
+        static Employee CreateEmployeeFromInput()
+        {
+            Console.Write("Enter name: ");
+            string name = Console.ReadLine();
+
+            Console.Write("Enter ID: ");
+            if (!int.TryParse(Console.ReadLine(), out int id))
+            {
+                throw new ArgumentException("Invalid ID format");
+            }
+
+            Console.Write("Enter salary: ");
+            if (!decimal.TryParse(Console.ReadLine(), out decimal salary))
+            {
+                throw new ArgumentException("Invalid salary format");
+            }
+
+            return new Employee(name, id, salary);
+        }
+    }
+}
